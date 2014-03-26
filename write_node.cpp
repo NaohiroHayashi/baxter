@@ -9,7 +9,7 @@ using namespace std;
 
 class Write_node{
     public:
-    double joint_angles[17]; //関数on_joint_statesのデータを受け取る
+    double joint_angles[17];
     std::ofstream ofs;
     
     Write_node(){
