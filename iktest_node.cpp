@@ -28,14 +28,14 @@ int main(int argc, char **argv)
     //service
     ros::ServiceClient client = n.serviceClient<baxter_core_msgs::SolvePositionIK>("ExternalTools/left/PositionKinematicsNode/IKService");
 
-    //msg変数
+    //msg
     baxter_core_msgs::JointCommand joint_cmd;
     joint_cmd.names.resize(7);
     joint_cmd.command.resize(7);
     string joint_names[7] = {"left_s0", "left_s1", "left_e0", "left_e1", "left_w0", "left_w1", "left_w2"};
     //~ float joint_angles[7] = {0.0, -0.55, 0.0, 0.75, 0.0, 1.26, 0.0};
     
-    //srv変数
+    //srv
     baxter_core_msgs::SolvePositionIK iksvc;
     iksvc.request.pose_stamp.resize(1);
     iksvc.response.joints.resize(1);
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         cout << joint_cmd.names[i] << iksvc.response.joints[0].position[i] << endl;
     }
 
-    joint_cmd.mode = 1;//positionモード
+    joint_cmd.mode = 1;//position
     std_msgs::Float64 speed_ratio,cmd_timeout;
     speed_ratio.data=0.1;
     cmd_timeout.data=0.2;
