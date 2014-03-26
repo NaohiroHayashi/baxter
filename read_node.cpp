@@ -43,7 +43,7 @@ int main(int argc, char **argv)
             exit(1);
     }
     
-    //msg変数
+    //msg
     baxter_core_msgs::JointCommand joint_cmd_l;
     joint_cmd_l.names.resize(7);
     joint_cmd_l.command.resize(7);
