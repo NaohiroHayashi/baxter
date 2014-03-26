@@ -69,8 +69,8 @@ int main(int argc, char **argv)
 
     
     while(true){
-        ifs >> tmp; //trash head_node_angle
-        ifs >> tmp2;//trash head_pan_angle
+        ifs >> tmp; //trash headdata
+        ifs >> tmp2;//trash headdata
         
         //read angles from a datfile
         for(int i=0; i<7; i++){
@@ -85,9 +85,9 @@ int main(int argc, char **argv)
         }
         cout << endl;   
         
-        ifs >> tmp3;//trash torso_angle
+        ifs >> tmp3;//trash headdata
         
-        for(int i=0; i<30 ;i++){
+        for(int i=0; i<30 ;i++){
             pub_rate.publish(rate); //The rate at which the joints are published can be controlled by publishing a frequency on this topic. Default rate is 100Hz; Maximum is 1000Hz
             pub_speed_ratio_l.publish(speed_ratio); //set joint speed default =0.3 range= 0.0-1.0
             pub_joint_cmd_timeout_l.publish(cmd_timeout);
