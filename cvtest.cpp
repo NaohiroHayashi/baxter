@@ -15,12 +15,12 @@ int main(int argc, char **argv)
   image_transport::ImageTransport it(n);
   image_transport::Publisher pub;
   pub = it.advertise("/robot/xdisplay", 1);
-  cv::Mat img = cv::imread("/home/kaminuno/catkin_ws/devel/lib/cvtest/sample.jpg");//画像の読み込み
-  if(!img.data)
-    {
+  cv::Mat img = cv::imread("/home/kaminuno/catkin_ws/devel/lib/cvtest/sample.jpg");//reading an image
+  
+  if(!img.data){
       printf("Cannot Open Imgfile!¥n");
       return(-1);
-    }
+  }
       
   cv::namedWindow("img",CV_WINDOW_AUTOSIZE|CV_WINDOW_FREERATIO);
   cv::imshow("img",img);
