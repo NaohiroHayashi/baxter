@@ -2,7 +2,7 @@ baxter
 ======
 
 
-I wrote some sample codes of baxter by C++.
+I wrote some sample codes of baxter by C.
 
 cvtest
 
