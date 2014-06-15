@@ -1,21 +1,15 @@
 #include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <std_msgs/UInt16.h>
-#include <std_msgs/Float64.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <baxter_core_msgs/JointCommand.h>
 #include <baxter_core_msgs/SolvePositionIK.h>
-#include <sstream>
 #include <iostream>
-#include <string>
-#include <cstdlib>
 #include <cmath>
 using namespace std;
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "test_joint_velocity_wobbler");
+    ros::init(argc, argv, "test_IK");
     ros::NodeHandle n;
     cout << "Initializing node... " << endl;
 
@@ -33,27 +27,22 @@ int main(int argc, char **argv)
     joint_cmd.names.resize(7);
     joint_cmd.command.resize(7);
     string joint_names[7] = {"left_s0", "left_s1", "left_e0", "left_e1", "left_w0", "left_w1", "left_w2"};
-    //~ float joint_angles[7] = {0.0, -0.55, 0.0, 0.75, 0.0, 1.26, 0.0};
     
     //srv
     baxter_core_msgs::SolvePositionIK iksvc;
     iksvc.request.pose_stamp.resize(1);
     iksvc.response.joints.resize(1);
-    geometry_msgs::PoseStamped a;
     double deg = 90.0; 
     iksvc.request.pose_stamp[0].header.stamp = ros::Time::now();
     iksvc.request.pose_stamp[0].header.frame_id = "base";
     iksvc.request.pose_stamp[0].pose.position.x = 0.657579481614;
     iksvc.request.pose_stamp[0].pose.position.y = 0.451981417433;
     iksvc.request.pose_stamp[0].pose.position.z = 0.3388352386502;
-    //~ iksvc.request.pose_stamp[0].pose.orientation.x = -0.366894936773 / sin((149.60317/2.0)*M_PI/180.0);
-    //~ iksvc.request.pose_stamp[0].pose.orientation.y = 0.085980397775 / sin((149.60317/2.0)*M_PI/180.0);
-    //~ iksvc.request.pose_stamp[0].pose.orientation.z = 0.008155782462 / sin((149.60317/2.0)*M_PI/180.0);
     iksvc.request.pose_stamp[0].pose.orientation.x = 1.0 * sin((deg/2.0)*M_PI/180.0);
     iksvc.request.pose_stamp[0].pose.orientation.y = 0.0 * sin((deg/2.0)*M_PI/180.0);
     iksvc.request.pose_stamp[0].pose.orientation.z =0.0 * sin((deg/2.0)*M_PI/180.0);
-    //~ iksvc.request.pose_stamp[0].pose.orientation.w = 0.262162481772;
     iksvc.request.pose_stamp[0].pose.orientation.w = cos((deg/2.0)*M_PI/180.0);
+    
     if(client.call(iksvc)){
         ROS_INFO("SUCCESS to call service");
     }
@@ -68,7 +57,6 @@ int main(int argc, char **argv)
     else{
         ROS_ERROR("INVALID POSE");
     }
-    
     
     
     for(int i=0; i<7; i++){
