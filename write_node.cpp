@@ -8,11 +8,20 @@
 using namespace std;
 
 class Write_node{
-    public:
+    private:
+    ros::NodeHandle n;   
+    ros::Subscriber joint_state_topic;
+    ros::Subscriber cuff_left_OKButton_state_topic;
+    ros::Subscriber cuff_right_OKButton_state_topic;   
     double joint_angles[17];
     std::ofstream ofs;
     
+    public:
     Write_node(){
+        n.subscribe("robot/joint_states", 10, &Write_node::on_joint_states , &write_node);
+        cuff_left_OKButton_state_topic = n.subscribe("robot/digital_io/left_lower_button/state", 10, &Write_node::on_OKButton_states, this);
+        cuff_right_OKButton_state_topic = n.subscribe("robot/digital_io/right_lower_button/state", 10, &Write_node::on_OKButton_states, this);   
+
         ofs.open( "/home/kaminuno/rw.dat", std::ios::out | std::ios::app );
         if (!ofs){
                 cout << "***error  Can not open the file\n";
@@ -48,12 +57,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "test_button_state");
     cout << "Initializing node... " << endl;
     Write_node write_node;
-    
-    //subscriber 
-    ros::NodeHandle n;   
-    ros::Subscriber joint_state_topic = n.subscribe("robot/joint_states", 10, &Write_node::on_joint_states , &write_node);
-    ros::Subscriber cuff_left_OKButton_state_topic = n.subscribe("robot/digital_io/left_lower_button/state", 10, &Write_node::on_OKButton_states, &write_node);
-    ros::Subscriber cuff_right_OKButton_state_topic = n.subscribe("robot/digital_io/right_lower_button/state", 10, &Write_node::on_OKButton_states, &write_node);   
     ros::spin(); //callback
     return 0;
 }
