@@ -15,7 +15,7 @@ class Read_node{
 	ros::Publisher pub_rate, pub_speed_ratio_l,pub_joint_cmd_l, pub_joint_cmd_timeout_l, pub_speed_ratio_r, pub_joint_cmd_r, pub_joint_cmd_timeout_r;
     float tmp,tmp2,tmp3;
 
-     //msg変数
+     //msg
     baxter_core_msgs::JointCommand joint_cmd_l;
     string joint_names_l[7];
     baxter_core_msgs::JointCommand joint_cmd_r;
