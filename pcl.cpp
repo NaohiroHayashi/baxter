@@ -8,15 +8,7 @@
 #include <pcl/ros/conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
 #include <pcl/filters/passthrough.h>
-#include <pcl/filters/project_inliers.h>
-#include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/surface/concave_hull.h>
 //std
 #include <iostream>
@@ -28,78 +20,67 @@ using namespace std;
 class Convex_hull{
     private:
     ros::NodeHandle n;
-    ros::Publisher pub1, pub2, pub3;
+    ros::Publisher pub3, pub4;
     ros::Subscriber sub;
-    sensor_msgs::PointCloud2 pub_data1, pub_data2, pub_data3;
+    sensor_msgs::PointCloud2 pub_filetrerd_xyz, pub_convex_full;
     
     public:
     Convex_hull(){
-        pub1 = n.advertise<sensor_msgs::PointCloud2> ("filter", 1);
-        pub2 = n.advertise<sensor_msgs::PointCloud2> ("palane", 1);
         pub3 = n.advertise<sensor_msgs::PointCloud2> ("convex_hull", 1);
-        sub = n.subscribe("camera/depth/points", 1, &Convex_hull::cloud_cb, this);
-
+        pub4 = n.advertise<sensor_msgs::PointCloud2> ("xyz_filter", 1);
+        sub = n.subscribe("camera/depth/points", 1, &Convex_hull::cloud_convex, this);
     }
     
-    void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud)
+    void cloud_convex (const sensor_msgs::PointCloud2ConstPtr& msg)
     {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_z(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_y(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered_x(new pcl::PointCloud<pcl::PointXYZ>);
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_data (new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr ros_cloud (new pcl::PointCloud<pcl::PointXYZ>);
             pcl::ConvexHull<pcl::PointXYZ> chull;
-            
-            // Perform the actual filtering
-            pcl::VoxelGrid<sensor_msgs::PointCloud2> sor;
-            sor.setInputCloud (cloud);
-            sor.setLeafSize (0.1, 0.1, 0.1);
-            sor.filter (pub_data1);
-            pcl::fromROSMsg (pub_data1, *cloud_data);
-            pub1.publish (pub_data1);
 
+            //filtering_xyz
+            pcl::fromROSMsg (*msg, *ros_cloud);
             pcl::PassThrough<pcl::PointXYZ> pass;
-            pass.setInputCloud (cloud_data);
-            pass.setFilterFieldName ("z");
-            pass.setFilterLimits (0, 7.0);
-            pass.filter (*cloud_filtered);
-            std::cerr << "PointCloud after filtering has: " << cloud_filtered->points.size () << " data points." << std::endl;
-            pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-            pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-            
-            // Create the segmentation object
-            pcl::SACSegmentation<pcl::PointXYZ> seg;
-            seg.setOptimizeCoefficients (true);// Optional
-            seg.setModelType (pcl::SACMODEL_PLANE);
-            seg.setMethodType (pcl::SAC_RANSAC);
-            seg.setDistanceThreshold (0.01);
-            seg.setInputCloud (cloud_filtered);
-            seg.segment (*inliers, *coefficients);
-            std::cerr << "PointCloud after segmentation has: " << inliers->indices.size () << " inliers." << std::endl;
+            pass.setInputCloud (ros_cloud); pass.setFilterFieldName ("z"); pass.setFilterLimits (0, 0.8); pass.filter (*cloud_filtered_z);//z
+            pass.setInputCloud (cloud_filtered_z); pass.setFilterFieldName ("y"); pass.setFilterLimits (0.0, 0.0015); pass.filter (*cloud_filtered_y);//y
+            pass.setInputCloud (cloud_filtered_y); pass.setFilterFieldName ("x"); pass.setFilterLimits (-0.2, 0.2); pass.filter (*cloud_filtered_x);//x
+            std::cerr << "PointCloud after filtering has: " << cloud_filtered_x->points.size () << " data points." << std::endl;
+            pcl::toROSMsg (*cloud_filtered_x, pub_filetrerd_xyz);
+            pub4.publish (pub_filetrerd_xyz);
 
-            // Project the model inliers
-            pcl::ProjectInliers<pcl::PointXYZ> proj;
-            proj.setModelType (pcl::SACMODEL_PLANE);
-            proj.setIndices (inliers);
-            proj.setInputCloud (cloud_filtered);
-            proj.setModelCoefficients (coefficients);
-            proj.filter (*cloud_projected);
-            std::cerr << "PointCloud after projection has: " << cloud_projected->points.size () << " data points." << std::endl;
-            pcl::toROSMsg (*cloud_projected, pub_data2);
-            pub2.publish (pub_data2);
-            
             // Create a ConvexHull representation of the projected inliers
-            chull.setInputCloud (cloud_projected);
-            //chull.setAlpha (0.1);
+            chull.setInputCloud (cloud_filtered_x);
             chull.reconstruct (*cloud_hull);
-            pcl::toROSMsg (*cloud_hull, pub_data3);
-            pub3.publish (pub_data3);
+            pcl::toROSMsg (*cloud_hull, pub_convex_full);
+            pub3.publish (pub_convex_full);
+            
+            //calculation Convex rectangle
+            cal_rectangle(*cloud_hull);
     }
+    
+    void cal_rectangle(pcl::PointCloud<pcl::PointXYZ>& cloud){
+        std::cout << cloud.width << std::endl;
+        int max_z, min_z;
+        
+        for(int i=0; i<cloud.width; i++){
+            if(i==0){
+                max_z = cloud.points[i].z;
+                min_z = cloud.points[i].z;
+            }
+            else if(cloud.points[i].z > max_z){
+                max_z = cloud.points[i].z;
+            }
+            else if(cloud.points[i].z < min_z){
+                min_z = cloud.points[i].z;
+            }
+        }
 };
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "convex_hull_node");
-
     cout << "Initializing node... " << endl;
     Convex_hull convex_hull;
     ros::spin();
